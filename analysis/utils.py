@@ -6,7 +6,7 @@ from .models import NewsSentiment
 
 def fetch_and_save_data(symbol):
     # Fetch data from Yahoo Finance
-    data = yf.download(symbol, period="5d", interval="1h")
+    data = yf.download(symbol, period="6mo", interval="1d")
     print(data.head())
     for date, row in data.iterrows():
         ETFData.objects.update_or_create(
@@ -21,18 +21,30 @@ def fetch_and_save_data(symbol):
             }
         )
 
+
 def calculate_sma(symbol):
     from pandas import DataFrame
     data = ETFData.objects.filter(symbol=symbol).order_by('date')
     df = DataFrame(list(data.values()))
+
+    # Debugging: Verifică datele înainte de calcul
+    print("Data before SMA calculation:")
+    print(df)
+
+    # Calculăm SMA
     df['sma_20'] = df['close_price'].rolling(window=20).mean()
     df['sma_50'] = df['close_price'].rolling(window=50).mean()
+
+    # Debugging: Verifică SMA calculat
+    print("Data with SMA:")
+    print(df[['close_price', 'sma_20', 'sma_50']])
 
     for _, row in df.iterrows():
         obj = ETFData.objects.get(pk=row['id'])
         obj.sma_20 = row['sma_20']
         obj.sma_50 = row['sma_50']
         obj.save()
+
 
 def fetch_and_analyze_news(etf_symbol):
     # Fetch news data from NewsAPI
@@ -65,24 +77,26 @@ def analyze_sentiment(text):
     return "Neutral"
 
 def generate_recommendation(symbol):
-    # Preluăm datele despre ETF din baza de date
     etf_data = ETFData.objects.filter(symbol=symbol).order_by('-date')
-    recent_sentiments = NewsSentiment.objects.filter(etf_symbol=symbol).order_by('-published_at')[:10]
+    if len(etf_data) < 50:
+        return "Insufficient historical data to make a recommendation"
 
-    # Calculăm sentimentele pozitive și negative
-    positive_news = sum(1 for s in recent_sentiments if s.sentiment == "Positive")
-    negative_news = sum(1 for s in recent_sentiments if s.sentiment == "Negative")
+    # Extrage ultimul rând cu valori SMA valide
+    last_valid_entry = etf_data.exclude(sma_20__isnull=True, sma_50__isnull=True).first()
 
-    # Verificăm datele despre prețuri și SMA
-    last_close = etf_data.first().close_price if etf_data.exists() else None
-    sma_20 = etf_data.first().sma_20 if etf_data.exists() else None
-    sma_50 = etf_data.first().sma_50 if etf_data.exists() else None
+    if not last_valid_entry:
+        return "No valid SMA data available"
 
-    # Tratăm cazul în care una dintre valori este None
-    if last_close is None or sma_20 is None or sma_50 is None:
-        return "Insufficient data to make a recommendation"
+    last_close = last_valid_entry.close_price
+    sma_20 = last_valid_entry.sma_20
+    sma_50 = last_valid_entry.sma_50
 
-    # Generăm recomandarea
+    print(f"Last Close: {last_close}, SMA 20: {sma_20}, SMA 50: {sma_50}")
+
+    # Adaugă logică de recomandare
+    positive_news = sum(1 for s in NewsSentiment.objects.filter(etf_symbol=symbol, sentiment="Positive"))
+    negative_news = sum(1 for s in NewsSentiment.objects.filter(etf_symbol=symbol, sentiment="Negative"))
+
     if positive_news > negative_news and last_close > sma_20 > sma_50:
         return "Buy"
     elif negative_news > positive_news and last_close < sma_20 < sma_50:
