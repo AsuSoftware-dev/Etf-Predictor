@@ -1,0 +1,4 @@
+- http://127.0.0.1:8000/recommendation/SPY/
+- http://127.0.0.1:8000/data/SPY/
+- http://127.0.0.1:8000/news/SPY/
+- http://127.0.0.1:8000/recommendation/SPY/
