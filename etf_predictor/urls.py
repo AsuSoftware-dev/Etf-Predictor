@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from analysis.views import analyze_etf
+from analysis.views import analyze_etf, get_financial_data, get_news_data, get_recommendation
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('analyze/<str:symbol>/', analyze_etf),
+    path('data/<str:symbol>/', get_financial_data),
+    path('news/<str:symbol>/', get_news_data),
+    path('recommendation/<str:symbol>/', get_recommendation),
 ]
