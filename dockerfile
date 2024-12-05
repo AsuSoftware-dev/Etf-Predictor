@@ -1,5 +1,5 @@
 # Folosește o imagine oficială Python
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Setează directorul de lucru în container
 WORKDIR /app
