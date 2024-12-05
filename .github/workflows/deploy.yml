@@ -14,13 +14,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # 2. Instalează pip și dependențele Python
-      - name: Install pip and Python dependencies
+      # 2. Crează și configurează un mediu virtual
+      - name: Set up Python virtual environment
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip
-          python3 -m pip install --upgrade pip
-          pip3 install -r requirements.txt
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
       # 3. Construiește imaginea Docker
       - name: Build Docker image
