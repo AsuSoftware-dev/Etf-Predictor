@@ -3,40 +3,44 @@ name: Deploy Etf Predictor API to Raspberry Pi 5
 on:
   push:
     branches:
-      - main  # Rulează workflow-ul la fiecare push pe branch-ul principal
+      - main
 
 jobs:
   build_and_deploy:
-    runs-on: [self-hosted, Linux, ARM64] # Rulează pe runner-ul configurat pe Raspberry Pi
+    runs-on: [self-hosted, Linux, ARM64]
 
     steps:
       # 1. Clonează repository-ul
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # 2. Asigură-te că pip este instalat
+      - name: Ensure pip is installed
+        run: |
+          python3 -m ensurepip --upgrade
+          python3 -m pip install --upgrade pip
+
+      # 3. Instalează dependențele Python
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
 
-      # 3. Construiește imaginea Docker
+      # 4. Construiește imaginea Docker
       - name: Build Docker image
         run: |
           docker build -t etf-predictor-api:latest .
 
-      # 4. Salvează și transferă imaginea Docker pe Raspberry Pi
-      - name: Save and transfer image to Raspberry Pi 5
+      # 5. Salvează și transferă imaginea pe Raspberry Pi
+      - name: Save and transfer image to Raspberry Pi
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          # Salvează imaginea Docker într-un fișier .tar
           docker save etf-predictor-api:latest -o etf-predictor-api.tar
-          
-          # Transferă fișierul .tar pe Raspberry Pi în /home/antonio/
           scp -i ~/.ssh/id_rsa -P 15621 etf-predictor-api.tar antonio@antonio-dev.go.ro:/home/antonio/
 
-      # 5. Încarcă imaginea și pornește containerul pe Raspberry Pi
-      - name: Load image and deploy on Raspberry Pi 5
+      # 6. Încarcă imaginea și pornește containerul pe Raspberry Pi
+      - name: Load image and deploy on Raspberry Pi
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
@@ -47,8 +51,8 @@ jobs:
              docker run -d --name etf-predictor-api -p 8080:8000 etf-predictor-api:latest
           "
 
-      # 6. Curăță fișierele temporare de pe Raspberry Pi
-      - name: Clean up Docker images and tar files on Raspberry Pi 5
+      # 7. Curăță fișierele temporare de pe Raspberry Pi
+      - name: Clean up Docker images and tar files on Raspberry Pi
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
