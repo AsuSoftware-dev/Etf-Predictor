@@ -1,4 +1,4 @@
-name: Deploy Etf Predictor API to Raspberry Pi 5
+name: Deploy Etf Predictor API to Raspberry Pi
 
 on:
   push:
@@ -14,20 +14,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # 2. Crează și configurează un mediu virtual
-      - name: Set up Python virtual environment
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # 3. Construiește imaginea Docker
+      # 2. Construiește imaginea Docker
       - name: Build Docker image
         run: |
           docker build -t etf-predictor-api:latest .
 
-      # 4. Salvează și transferă imaginea pe Raspberry Pi
+      # 3. Salvează și transferă imaginea pe Raspberry Pi
       - name: Save and transfer image to Raspberry Pi
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -35,7 +27,7 @@ jobs:
           docker save etf-predictor-api:latest -o etf-predictor-api.tar
           scp -i ~/.ssh/id_rsa -P 15621 etf-predictor-api.tar antonio@antonio-dev.go.ro:/home/antonio/
 
-      # 5. Încarcă imaginea și pornește containerul pe Raspberry Pi
+      # 4. Încarcă imaginea și pornește containerul pe Raspberry Pi
       - name: Load image and deploy on Raspberry Pi
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -47,7 +39,7 @@ jobs:
              docker run -d --name etf-predictor-api -p 8080:8000 etf-predictor-api:latest
           "
 
-      # 6. Curăță fișierele temporare de pe Raspberry Pi
+      # 5. Curăță fișierele temporare de pe Raspberry Pi
       - name: Clean up Docker images and tar files on Raspberry Pi
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
