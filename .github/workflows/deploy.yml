@@ -14,12 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # 2. Configurare Python și instalare dependințe
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.11'
-
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
