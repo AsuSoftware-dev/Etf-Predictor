@@ -17,8 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from analysis.views import analyze_etf, get_financial_data, get_news_data, get_recommendation
+from django.http import HttpResponse
+
+def index(request):
+    return HttpResponse("Aplicația funcționează!")
 
 urlpatterns = [
+    path('', index),
     path('admin/', admin.site.urls),
     path('analyze/<str:symbol>/', analyze_etf),
     path('data/<str:symbol>/', get_financial_data),
